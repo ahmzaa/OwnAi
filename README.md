@@ -9,4 +9,4 @@ Own AI is a set of docker containers that allow you to host your own AI.
 - Enough VRAM to run the models
 
 Note:
-Watchtower is not require but nice to have, auto updates containers by checking for new releases.
+Watchtower is not required but nice to have, auto updates containers by checking for new releases.
