@@ -21,3 +21,4 @@ Own AI is a set of docker containers that allow you to host your own AI.
 Note:
 
 - Watchtower is not required but nice to have, auto updates containers by checking for new releases.
+  - Watchtower is set to check every 24 hours, you can change this in the watchtower section of the compose file `--interval`.
