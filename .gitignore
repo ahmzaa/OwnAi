@@ -1,0 +1,7 @@
+.env
+comfyui/
+data/
+models/
+ollama/
+open-webui/
+

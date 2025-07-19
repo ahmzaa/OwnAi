@@ -1,0 +1,83 @@
+services:
+  ollama:
+    container_name: ollama
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - CUDA_VISIBLE_DEVICES=0
+      - LOG_LEVEL=debug
+    volumes:
+      - ./ollama:/root/.ollama
+      - ./models:/models
+    networks:
+      - ollama-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              count: all
+
+  open-webui:
+    container_name: open-webui
+    image: ghcr.io/open-webui/open-webui:main
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - MODEL_DOWNLOAD_DIR=/models
+      - OLLAMA_API_BASE_URL=http://ollama:11434
+      - OLLAMA_API_URL=http://ollama:11434
+      - LOG_LEVEL=debug
+      - WEBUI_SECRET_KEY=$PASS  # Add this to prevent logouts after updates
+    volumes:
+      - ./data:/data
+      - ./models:/models
+      - ./open-webui:/app/backend/data  # Corrected path based on documentation
+    depends_on:
+      - ollama
+      - comfyui
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - ollama-net
+
+
+  comfyui:
+    container_name: comfyui
+    image: yanwk/comfyui-boot:cu124-slim
+    restart: unless-stopped
+    ports:
+      - "8188:8188"
+    volumes:
+      - ./comfyui:/root
+    networks:
+      - ollama-net
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              count: all
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 86400 open-webui ollama comfyui  # Check for updates every day
+    depends_on:
+      - open-webui
+    networks:
+      - ollama-net
+    restart: unless-stopped
+
+networks:
+  ollama-net:
+    driver: bridge
